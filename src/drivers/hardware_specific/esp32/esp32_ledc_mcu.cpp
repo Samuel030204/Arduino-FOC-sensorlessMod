@@ -54,16 +54,6 @@ typedef struct ESP32LEDCDriverParams {
 } ESP32LEDCDriverParams;
 
 
-
-int esp32_gpio_nr(int pin) {
-  #if defined(BOARD_HAS_PIN_REMAP) && !defined(BOARD_USES_HW_GPIO_NUMBERS)
-    return digitalPinToGPIONumber(pin);
-  #else
-    return pin;
-  #endif
-}
-
-
 /*
   Function to attach a channel to a pin with advanced settings
   - freq - pwm frequency
@@ -86,7 +76,6 @@ bool _ledcAttachChannelAdvanced(uint8_t pin, int _channel, int _group, uint32_t 
 
   ledc_timer_bit_t res = static_cast<ledc_timer_bit_t>(resolution);
   ledc_timer_config_t ledc_timer;
-  memset(&ledc_timer, 0, sizeof(ledc_timer));
   ledc_timer.speed_mode = group;
   ledc_timer.timer_num = LEDC_TIMER_0;
   ledc_timer.duty_resolution = res;
@@ -107,7 +96,7 @@ bool _ledcAttachChannelAdvanced(uint8_t pin, int _channel, int _group, uint32_t 
   ledc_channel.channel =  channel;
   ledc_channel.timer_sel = LEDC_TIMER_0; 
   ledc_channel.intr_type = LEDC_INTR_DISABLE;
-  ledc_channel.gpio_num = esp32_gpio_nr(pin);
+  ledc_channel.gpio_num = pin;
   ledc_channel.duty = duty;
   ledc_channel.hpoint = 0;
   ledc_channel.flags.output_invert = pin_high_level; // 0 is active high, 1 is active low
@@ -235,6 +224,7 @@ void* _configure3PWM(long pwm_frequency,const int pinA, const int pinB, const in
 
   int pins[3] = {pinA, pinB, pinC};
   for(int i = 0; i < 3; i++){
+    group_channels_used[group]++;
     if(!_ledcAttachChannelAdvanced(pins[i], group_channels_used[group], group, pwm_frequency, _PWM_RES_BIT, false)){
       SIMPLEFOC_DEBUG("EP32-DRV: ERROR - Failed to configure pin:",  pins[i]);
       return SIMPLEFOC_DRIVER_INIT_FAILED;
@@ -242,7 +232,6 @@ void* _configure3PWM(long pwm_frequency,const int pinA, const int pinB, const in
     
     params->channels[i] = static_cast<ledc_channel_t>(group_channels_used[group]);
     params->groups[i] = (ledc_mode_t)group;
-    group_channels_used[group]++;
   }
   SIMPLEFOC_DEBUG("EP32-DRV: 3PWM setup successful in group: ", (group));
   return params;

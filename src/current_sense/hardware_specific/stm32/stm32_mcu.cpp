@@ -30,5 +30,4 @@ __attribute__((weak))  float _readADCVoltageInline(const int pinA, const void* c
   return raw_adc * ((Stm32CurrentSenseParams*)cs_params)->adc_voltage_conv;
 }
 
-
 #endif

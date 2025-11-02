@@ -78,3 +78,8 @@ int32_t Sensor::getFullRotations() {
 int Sensor::needsSearch() {
     return 0; // default false
 }
+
+
+int Sensor::issensorless() {
+    return 0; // default false
+}

@@ -64,6 +64,12 @@ struct ABCurrent_s
     float alpha;
     float beta;
 };
+// alpha beta voltage structure
+struct ABVoltage_s
+{
+    float alpha;
+    float beta;
+};
 
 
 /**

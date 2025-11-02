@@ -9,6 +9,37 @@
 #define DEF_PID_VEL_RAMP 1000.0f //!< default PID controller voltage ramp value
 #define DEF_PID_VEL_LIMIT (DEF_POWER_SUPPLY) //!< default PID controller voltage limit
 
+#define DEF_VRI_LP_FILTER_Tf 0.005f //!< default VRI integrator low-pass filter time constant
+#define DEF_VRI_HP_FILTER_Tf 0.05f //!< default VRI integrator high-pass filter time constant
+#define DEF_FLUX_HP_FILTER_Tf 0.05f //!< default flux linkage high-pass filter time constant
+
+/*
+14 pole pairs, 15 rad/s
+// lags but smooth
+#define DEF_VRI_LP_FILTER_Tf 0.0075f
+#define DEF_VRI_HP_FILTER_Tf 0.1f
+
+#define DEF_VRI_LP_FILTER_Tf 0.01f
+#define DEF_VRI_HP_FILTER_Tf 0.1f
+
+// good angle but vibration occurs
+#define DEF_VRI_LP_FILTER_Tf 0.0025f
+#define DEF_VRI_HP_FILTER_Tf 0.1f
+
+// good angle and ok vibration
+#define DEF_VRI_LP_FILTER_Tf 0.005f
+#define DEF_VRI_HP_FILTER_Tf 0.05f
+
+// lags and ok vibration
+#define DEF_VRI_LP_FILTER_Tf 0.025f
+#define DEF_VRI_HP_FILTER_Tf 0.05f
+
+// final choice
+#define DEF_VRI_LP_FILTER_Tf 0.005f //!< default VRI integrator low-pass filter time constant
+#define DEF_VRI_HP_FILTER_Tf 0.05f //!< default VRI integrator high-pass filter time constant
+#define DEF_FLUX_HP_FILTER_Tf 0.05f
+*/
+
 // current sensing PID values
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega328PB__)  || defined(__AVR_ATmega2560__)
 // for 16Mhz controllers like Arduino uno and mega

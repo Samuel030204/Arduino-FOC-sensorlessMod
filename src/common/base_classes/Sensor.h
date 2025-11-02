@@ -107,6 +107,8 @@ class Sensor{
          * Minimum time between updates to velocity. If time elapsed is lower than this, the velocity is not updated.
          */
         float min_elapsed_time = 0.000100; // default is 100 microseconds, or 10kHz
+        
+        virtual int issensorless();
 
     protected:
         /** 

@@ -93,13 +93,10 @@ int BLDCMotor::init() {
   P_angle.limit = velocity_limit;
 
   // if using open loop control, set a CW as the default direction if not already set
-  // only if no sensor is used
-  if(!sensor){
-    if ((controller==MotionControlType::angle_openloop
-      ||controller==MotionControlType::velocity_openloop)
-      && (sensor_direction == Direction::UNKNOWN)) {
-        sensor_direction = Direction::CW;
-    }
+  if ((controller==MotionControlType::angle_openloop
+     ||controller==MotionControlType::velocity_openloop)
+     && (sensor_direction == Direction::UNKNOWN)) {
+      sensor_direction = Direction::CW;
   }
 
   _delay(500);
@@ -155,8 +152,15 @@ int  BLDCMotor::initFOC() {
   // alignment necessary for encoders!
   // sensor and motor alignment - can be skipped
   // by setting motor.sensor_direction and motor.zero_electric_angle
-  if(sensor){
-    exit_flag *= alignSensor();
+    if(sensor){
+    	
+	if (sensor->issensorless()) {
+		zero_electric_angle = 0;
+    }
+    else {
+  	  	exit_flag *= alignSensor();
+    }
+    
     // added the shaft_angle update
     sensor->update();
     shaft_angle = shaftAngle();
@@ -293,7 +297,9 @@ int BLDCMotor::alignSensor() {
     zero_electric_angle = electricalAngle();
     //zero_electric_angle =  _normalizeAngle(_electricalAngle(sensor_direction*sensor->getAngle(), pole_pairs));
     _delay(20);
-    SIMPLEFOC_DEBUG("MOT: Zero elec. angle: ", zero_electric_angle);
+    if(monitor_port){
+      SIMPLEFOC_DEBUG("MOT: Zero elec. angle: ", zero_electric_angle);
+    }
     // stop everything
     setPhaseVoltage(0, 0, 0);
     _delay(200);
@@ -338,9 +344,22 @@ void BLDCMotor::loopFOC() {
   // update sensor - do this even in open-loop mode, as user may be switching between modes and we could lose track
   //                 of full rotations otherwise.
   if (sensor) sensor->update();
-
+  
   // if open-loop do nothing
-  if( controller==MotionControlType::angle_openloop || controller==MotionControlType::velocity_openloop ) return;
+  if( controller==MotionControlType::angle_openloop || controller==MotionControlType::velocity_openloop ) {
+  	if( sensor->issensorless() ) {
+	electrical_angle = electricalAngle();
+  	
+	if(!current_sense) return;
+	// read dq currents
+	current = current_sense->getFOCCurrents(electrical_angle);
+	// filter values
+	current.q = LPF_current_q(current.q);
+	current.d = LPF_current_d(current.d);
+  	}
+  	
+  	return;
+  }
   
   // if disabled do nothing
   if(!enabled) return;
@@ -349,9 +368,20 @@ void BLDCMotor::loopFOC() {
   // This function will not have numerical issues because it uses Sensor::getMechanicalAngle() 
   // which is in range 0-2PI
   electrical_angle = electricalAngle();
+//  electrical_angle = LPF_angle_el(electricalAngle());
   switch (torque_controller) {
     case TorqueControlType::voltage:
       // no need to do anything really
+	    if( sensor->issensorless() ) {
+		electrical_angle = electricalAngle();
+	  	
+		if(!current_sense) return;
+		// read dq currents
+		current = current_sense->getFOCCurrents(electrical_angle);
+		// filter values
+		current.q = LPF_current_q(current.q);
+		current.d = LPF_current_d(current.d);
+	  	}
       break;
     case TorqueControlType::dc_current:
       if(!current_sense) return;
@@ -375,6 +405,7 @@ void BLDCMotor::loopFOC() {
       // calculate the phase voltages
       voltage.q = PID_current_q(current_sp - current.q);
       voltage.d = PID_current_d(-current.d);
+//      voltage.d = PID_current_d(-current.d) - current_sp*shaft_velocity*pole_pairs*phase_inductance;
       // d voltage - lag compensation - TODO verify
       // if(_isset(phase_inductance)) voltage.d = _constrain( voltage.d - current_sp*shaft_velocity*pole_pairs*phase_inductance, -voltage_limit, voltage_limit);
       break;
@@ -408,10 +439,16 @@ void BLDCMotor::move(float new_target) {
   //                        For this reason it is NOT precise when the angles become large.
   //                        Additionally, the way LPF works on angle is a precision issue, and the angle-LPF is a problem
   //                        when switching to a 2-component representation.
-  if( controller!=MotionControlType::angle_openloop && controller!=MotionControlType::velocity_openloop ) 
-    shaft_angle = shaftAngle(); // read value even if motor is disabled to keep the monitoring updated but not in openloop mode
+  if( controller!=MotionControlType::angle_openloop && controller!=MotionControlType::velocity_openloop ) {
+  	shaft_angle = shaftAngle(); // read value even if motor is disabled to keep the monitoring updated but not in openloop mode
+  	shaft_angle_rec = _normalizeAngle(shaft_angle);
+  }
+  else {
+  	shaft_angle_rec = _normalizeAngle(shaftAngle());
+  }
   // get angular velocity  TODO the velocity reading probably also shouldn't happen in open loop modes?
   shaft_velocity = shaftVelocity(); // read value even if motor is disabled to keep the monitoring updated
+  shaft_velocity_rec = shaft_velocity;
 
   // if disabled do nothing
   if(!enabled) return;
@@ -466,9 +503,11 @@ void BLDCMotor::move(float new_target) {
         // use voltage if phase-resistance not provided
         if(!_isset(phase_resistance))  voltage.q = current_sp;
         else  voltage.q = _constrain( current_sp*phase_resistance + voltage_bemf , -voltage_limit, voltage_limit);
-        // set d-component (lag compensation if known inductance)
+//        else voltage.q = aux1;
+		// set d-component (lag compensation if known inductance)
         if(!_isset(phase_inductance)) voltage.d = 0;
         else voltage.d = _constrain( -current_sp*shaft_velocity*pole_pairs*phase_inductance, -voltage_limit, voltage_limit);
+//        else voltage.d = aux2;
       }
       break;
     case MotionControlType::velocity_openloop:

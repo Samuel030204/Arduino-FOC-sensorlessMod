@@ -10,6 +10,7 @@
 #include "../defaults.h"
 #include "../pid.h"
 #include "../lowpass_filter.h"
+#include "../highpass_filter.h"
 
 
 // monitoring bitmap
@@ -149,15 +150,6 @@ class FOCMotor
      */
     float electricalAngle();
 
-    /**
-     * Measure resistance and inductance of a motor and print results to debug.
-     * If a sensor is available, an estimate of zero electric angle will be reported too.
-     * @param voltage The voltage applied to the motor
-     * @param correction_factor  Is 1.5 for 3 phase motors, because we measure over a series-parallel connection. TODO: what about 2 phase motors?
-     * @returns 0 for success, >0 for failure
-     */
-    int characteriseMotor(float voltage, float correction_factor);
-
     // state variables
     float target; //!< current target value - depends of the controller
     float feed_forward_velocity = 0.0f; //!< current feed forward velocity
@@ -172,6 +164,9 @@ class FOCMotor
     float voltage_bemf; //!< estimated backemf voltage (if provided KV constant)
     float	Ualpha, Ubeta; //!< Phase voltages U alpha and U beta used for inverse Park and Clarke transform
 
+	float shaft_angle_rec;
+	float shaft_velocity_rec;
+	
 
     // motor configuration parameters
     float voltage_sensor_align;//!< sensor and motor align voltage parameter

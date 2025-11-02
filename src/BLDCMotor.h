@@ -80,17 +80,10 @@ class BLDCMotor: public FOCMotor
     * @param angle_el current electrical angle of the motor
     */
     void setPhaseVoltage(float Uq, float Ud, float angle_el) override;
-
-    /**
-     * Measure resistance and inductance of a BLDCMotor and print results to debug.
-     * If a sensor is available, an estimate of zero electric angle will be reported too.
-     * @param voltage The voltage applied to the motor
-     * @returns 0 for success, >0 for failure
-     */
-    int characteriseMotor(float voltage){
-      return FOCMotor::characteriseMotor(voltage, 1.5f);
-    }
     
+    float aux1 = 0;
+    float aux2 = 0;
+
   private:
     // FOC methods 
 
