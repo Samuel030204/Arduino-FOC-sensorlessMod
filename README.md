@@ -24,17 +24,17 @@ A **mini dryer** was designed using CAD and fabricated with 3D printing.
 <!-- Replace 'image.png' with your CAD screenshot or photo -->
 ![Image 1](README_images/1.png)
 ![Image 2](README_images/2.png)
-...
+
 ![Image 3](README_images/3.png)
 ![Image 4](README_images/4.png)
 ![Image 5](README_images/5.png)
 ![Image 6](README_images/6.png)
-...
+
 ![Image 7](README_images/7.png)
 ![Image 8](README_images/8.png)
 ![Image 9](README_images/9.png)
 ![Image 10](README_images/10.png)
-...
+
 ![Image 11](README_images/11.png)
 ![Image 12](README_images/12.png)
 ![Image 13](README_images/13.png)
